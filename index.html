@@ -14,7 +14,7 @@
             background-color: #f3f4f6;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
         }
         .card {
             background-color: #fff;
@@ -60,10 +60,11 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], select {
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
             padding: 0.5rem;
+            width: 100%;
         }
         /* Animation classes */
         .fade-in {
@@ -80,6 +81,16 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-10px); }
         }
+        .progress-bar-container {
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 9999px;
+            background-color: #008542;
+            transition: width 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-8">
@@ -93,18 +104,41 @@
         <!-- Summary Section -->
         <div class="card p-6 mb-6">
             <h2 class="text-2xl font-bold mb-4">Summary</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    <p class="text-gray-600">Total Credit Hours</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-gray-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 text-sm">Total Credit Hours</p>
                     <p id="total-credits" class="text-3xl font-bold text-gray-800">0</p>
                 </div>
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    <p class="text-gray-600">Transferred Credits</p>
+                <div class="bg-gray-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 text-sm">Transferred Credits</p>
                     <p id="transfer-credits" class="text-3xl font-bold text-gray-800">0</p>
                 </div>
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    <p class="text-gray-600">Remaining Credit Hours</p>
+                <div class="bg-gray-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 text-sm">Core Credits</p>
+                    <p id="core-credits" class="text-3xl font-bold text-gray-800">0</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 text-sm">Remaining Credits (of 124)</p>
                     <p id="remaining-credits" class="text-3xl font-bold text-gray-800">124</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Requirements Trackers -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Core Curriculum Tracker -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold mb-4">Core Curriculum Requirements (42 Credits)</h2>
+                <div id="core-tracker" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Core requirements will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Major Requirements Tracker -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold mb-4">CS Major Requirements (82 Credits)</h2>
+                <div id="major-tracker" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Major requirements will be dynamically added here -->
                 </div>
             </div>
         </div>
@@ -151,16 +185,56 @@
             const clearBtn = document.getElementById('clear-btn');
             const totalCreditsEl = document.getElementById('total-credits');
             const transferCreditsEl = document.getElementById('transfer-credits');
+            const coreCreditsEl = document.getElementById('core-credits');
             const remainingCreditsEl = document.getElementById('remaining-credits');
+            const coreTrackerEl = document.getElementById('core-tracker');
+            const majorTrackerEl = document.getElementById('major-tracker');
             const toastEl = document.getElementById('toast');
 
             // Constants
             const TOTAL_DEGREE_HOURS = 124;
             let clearConfirmed = false;
+            
+            const CORE_REQUIREMENTS = [
+                { category: '010 Communication', required: 6 },
+                { category: '020 Mathematics', required: 3 },
+                { category: '030 Life & Physical Sciences', required: 6 },
+                { category: '040 Language, Philosophy & Culture', required: 3 },
+                { category: '050 Creative Arts', required: 3 },
+                { category: '060 American History', required: 6 },
+                { category: '070 Government/Political Science', required: 6 },
+                { category: '080 Social & Behavioral Sciences', required: 3 },
+                { category: '090 Component Area Option', required: 6 }
+            ];
+
+            const MAJOR_REQUIREMENTS = {
+                'Major Preparatory': [
+                    { code: 'CS 1436', name: 'Programming Fundamentals', credits: 4 },
+                    { code: 'CS 1337', name: 'Computer Science I', credits: 3 },
+                    { code: 'CS 2305', name: 'Discrete Mathematics for Computing I', credits: 3 },
+                    { code: 'CS 2336', name: 'Computer Science II', credits: 3 },
+                    { code: 'CS 2340', name: 'Computer Architecture', credits: 3 },
+                    { code: 'MATH 2418', name: 'Linear Algebra', credits: 4 },
+                ],
+                'Major Core': [
+                    { code: 'CS 3162', name: 'Professional Responsibility in CS and SE', credits: 1 },
+                    { code: 'CS 3341', name: 'Probability and Statistics in CS and SE', credits: 3 },
+                    { code: 'CS 3345', name: 'Data Structures and Intro to Algorithmic Analysis', credits: 3 },
+                    { code: 'CS 3354', name: 'Software Engineering', credits: 3 },
+                    { code: 'CS 3377', name: 'Systems Programming in UNIX and Other Environments', credits: 3 },
+                    { code: 'CS 4337', name: 'Programming Language Paradigms', credits: 3 },
+                    { code: 'CS 4341', name: 'Digital Logic and Computer Design', credits: 3 },
+                    { code: 'CS 4141', name: 'Digital Systems Laboratory', credits: 1 },
+                    { code: 'CS 4347', name: 'Database Systems', credits: 3 },
+                    { code: 'CS 4348', name: 'Operating Systems Concepts', credits: 3 },
+                ],
+                'Technical Electives': [
+                    { code: 'CS 4XXX', name: 'CS Technical Elective', credits: 12, count: 4}
+                ]
+            };
 
             // --- Helper Functions ---
 
-            // Function to show a toast message
             function showToast(message) {
                 toastEl.textContent = message;
                 toastEl.classList.remove('opacity-0');
@@ -171,7 +245,6 @@
                 }, 3000);
             }
 
-            // Function to save the entire plan to local storage
             function savePlan() {
                 const semesters = [];
                 document.querySelectorAll('.semester-card').forEach(semesterCard => {
@@ -184,7 +257,9 @@
                             code: courseItem.querySelector('.course-code').value,
                             name: courseItem.querySelector('.course-name').value,
                             credits: parseInt(courseItem.querySelector('.course-credits').value) || 0,
-                            transferred: courseItem.querySelector('.transferred-checkbox').checked
+                            transferred: courseItem.querySelector('.transferred-checkbox').checked,
+                            coreCategory: courseItem.querySelector('.core-category').value,
+                            majorRequirement: courseItem.querySelector('.major-requirement').value
                         });
                     });
                     semesters.push(semester);
@@ -193,32 +268,69 @@
                 updateSummary();
             }
 
-            // Function to update the summary panel
             function updateSummary() {
-                const creditInputs = document.querySelectorAll('.course-credits');
-                const transferredCheckboxes = document.querySelectorAll('.transferred-checkbox');
-                
                 let totalCredits = 0;
                 let transferCredits = 0;
+                
+                // Trackers for Core and Major requirements
+                const coreTracker = {};
+                CORE_REQUIREMENTS.forEach(req => coreTracker[req.category] = 0);
 
-                creditInputs.forEach(input => {
-                    const credits = parseInt(input.value) || 0;
+                const majorTracker = {
+                    'Major Preparatory': {},
+                    'Major Core': {},
+                    'Technical Electives': { credits: 0, count: 0 }
+                };
+
+                // Initialize major trackers
+                MAJOR_REQUIREMENTS['Major Preparatory'].forEach(req => majorTracker['Major Preparatory'][req.code] = { ...req, completed: false });
+                MAJOR_REQUIREMENTS['Major Core'].forEach(req => majorTracker['Major Core'][req.code] = { ...req, completed: false });
+
+
+                document.querySelectorAll('.course-item').forEach(item => {
+                    const credits = parseInt(item.querySelector('.course-credits').value) || 0;
                     totalCredits += credits;
-                });
+                    if (item.querySelector('.transferred-checkbox').checked) {
+                        transferCredits += credits;
+                    }
+                    
+                    const coreCategory = item.querySelector('.core-category').value;
+                    if (coreCategory !== 'none' && credits > 0) {
+                        coreTracker[coreCategory] += credits;
+                    }
 
-                transferredCheckboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        const creditInput = checkbox.closest('.course-item').querySelector('.course-credits');
-                        transferCredits += parseInt(creditInput.value) || 0;
+                    const majorReq = item.querySelector('.major-requirement').value;
+                    const courseCode = item.querySelector('.course-code').value.toUpperCase();
+
+                    if (majorReq === 'tech-elective') {
+                        majorTracker['Technical Electives'].credits += credits;
+                        majorTracker['Technical Electives'].count += 1;
+                    } else if (majorReq !== 'none') {
+                        // Check if the course code matches a major requirement
+                        for (const category in majorTracker) {
+                            if (majorTracker[category][courseCode]) {
+                                majorTracker[category][courseCode].completed = true;
+                                break;
+                            }
+                        }
                     }
                 });
 
                 totalCreditsEl.textContent = totalCredits;
                 transferCreditsEl.textContent = transferCredits;
+                
+                let totalCoreCreditsEarned = 0;
+                for (const cat in coreTracker) {
+                    const required = CORE_REQUIREMENTS.find(req => req.category === cat).required;
+                    totalCoreCreditsEarned += Math.min(required, coreTracker[cat]);
+                }
+                coreCreditsEl.textContent = totalCoreCreditsEarned;
                 remainingCreditsEl.textContent = Math.max(0, TOTAL_DEGREE_HOURS - totalCredits);
+
+                updateCoreTracker(coreTracker);
+                updateMajorTracker(majorTracker);
             }
 
-            // Function to update semester total credits
             function updateSemesterTotal(semesterElement) {
                 const creditInputs = semesterElement.querySelectorAll('.course-credits');
                 let semesterCredits = 0;
@@ -229,32 +341,201 @@
                 savePlan();
             }
 
-            // Function to create a new course item
+            function updateCoreTracker(trackerData) {
+                coreTrackerEl.innerHTML = ''; // Clear existing tracker
+                CORE_REQUIREMENTS.forEach(req => {
+                    const current = trackerData[req.category] || 0;
+                    const required = req.required;
+                    const progress = Math.min(100, (current / required) * 100);
+                    const isComplete = current >= required;
+
+                    const trackerItem = document.createElement('div');
+                    trackerItem.className = 'bg-gray-100 p-4 rounded-lg flex flex-col justify-between';
+                    trackerItem.innerHTML = `
+                        <div>
+                            <p class="font-bold text-gray-800">${req.category}</p>
+                            <p class="text-sm text-gray-600">${current} / ${required} credits</p>
+                        </div>
+                        <div class="progress-bar-container w-full h-2 mt-2">
+                            <div class="progress-bar h-full ${isComplete ? 'bg-green-500' : 'bg-utd-green'}" style="width: ${progress}%;"></div>
+                        </div>
+                    `;
+                    coreTrackerEl.appendChild(trackerItem);
+                });
+            }
+
+            function updateMajorTracker(trackerData) {
+                majorTrackerEl.innerHTML = ''; // Clear existing tracker
+                
+                // Render Major Preparatory
+                const prepHeader = document.createElement('h3');
+                prepHeader.className = 'text-lg font-semibold text-gray-700 col-span-full mt-2';
+                prepHeader.textContent = 'Major Preparatory Courses';
+                majorTrackerEl.appendChild(prepHeader);
+
+                for (const code in trackerData['Major Preparatory']) {
+                    const req = trackerData['Major Preparatory'][code];
+                    const isComplete = req.completed;
+                    const trackerItem = document.createElement('div');
+                    trackerItem.className = 'bg-gray-100 p-4 rounded-lg flex flex-col justify-between';
+                    trackerItem.innerHTML = `
+                        <p class="font-bold text-gray-800">${req.code} ${req.name}</p>
+                        <p class="text-sm text-gray-600">${isComplete ? 'Complete' : 'Not Started'}</p>
+                        <div class="progress-bar-container w-full h-2 mt-2">
+                            <div class="progress-bar h-full ${isComplete ? 'bg-green-500' : 'bg-utd-green'}" style="width: ${isComplete ? '100' : '0'}%;"></div>
+                        </div>
+                    `;
+                    majorTrackerEl.appendChild(trackerItem);
+                }
+
+                // Render Major Core
+                const coreHeader = document.createElement('h3');
+                coreHeader.className = 'text-lg font-semibold text-gray-700 col-span-full mt-2';
+                coreHeader.textContent = 'Major Core Courses';
+                majorTrackerEl.appendChild(coreHeader);
+                
+                for (const code in trackerData['Major Core']) {
+                    const req = trackerData['Major Core'][code];
+                    const isComplete = req.completed;
+                    const trackerItem = document.createElement('div');
+                    trackerItem.className = 'bg-gray-100 p-4 rounded-lg flex flex-col justify-between';
+                    trackerItem.innerHTML = `
+                        <p class="font-bold text-gray-800">${req.code} ${req.name}</p>
+                        <p class="text-sm text-gray-600">${isComplete ? 'Complete' : 'Not Started'}</p>
+                        <div class="progress-bar-container w-full h-2 mt-2">
+                            <div class="progress-bar h-full ${isComplete ? 'bg-green-500' : 'bg-utd-green'}" style="width: ${isComplete ? '100' : '0'}%;"></div>
+                        </div>
+                    `;
+                    majorTrackerEl.appendChild(trackerItem);
+                }
+
+                // Render Technical Electives
+                const electiveHeader = document.createElement('h3');
+                electiveHeader.className = 'text-lg font-semibold text-gray-700 col-span-full mt-2';
+                electiveHeader.textContent = 'Technical Electives';
+                majorTrackerEl.appendChild(electiveHeader);
+
+                const techElectiveData = trackerData['Technical Electives'];
+                const requiredElectives = MAJOR_REQUIREMENTS['Technical Electives'][0].count;
+                const completedElectives = techElectiveData.count;
+                const progress = Math.min(100, (completedElectives / requiredElectives) * 100);
+                const isComplete = completedElectives >= requiredElectives;
+
+                const electiveItem = document.createElement('div');
+                electiveItem.className = 'bg-gray-100 p-4 rounded-lg flex flex-col justify-between';
+                electiveItem.innerHTML = `
+                    <p class="font-bold text-gray-800">CS 4XXX (4 courses)</p>
+                    <p class="text-sm text-gray-600">${completedElectives} / ${requiredElectives} courses completed</p>
+                    <div class="progress-bar-container w-full h-2 mt-2">
+                        <div class="progress-bar h-full ${isComplete ? 'bg-green-500' : 'bg-utd-green'}" style="width: ${progress}%;"></div>
+                    </div>
+                `;
+                majorTrackerEl.appendChild(electiveItem);
+            }
+
+
+            function createCoreCategorySelect(selectedCategory) {
+                const select = document.createElement('select');
+                select.className = 'core-category text-sm p-2 bg-white';
+                
+                const noneOption = document.createElement('option');
+                noneOption.value = 'none';
+                noneOption.textContent = '-- Core Category --';
+                select.appendChild(noneOption);
+
+                CORE_REQUIREMENTS.forEach(req => {
+                    const option = document.createElement('option');
+                    option.value = req.category;
+                    option.textContent = req.category;
+                    if (selectedCategory === req.category) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+                return select;
+            }
+            
+            function createMajorRequirementSelect(selectedRequirement) {
+                const select = document.createElement('select');
+                select.className = 'major-requirement text-sm p-2 bg-white';
+
+                const noneOption = document.createElement('option');
+                noneOption.value = 'none';
+                noneOption.textContent = '-- Major Requirement --';
+                select.appendChild(noneOption);
+                
+                select.innerHTML += `<optgroup label="Major Preparatory">`;
+                MAJOR_REQUIREMENTS['Major Preparatory'].forEach(req => {
+                    const option = document.createElement('option');
+                    option.value = req.code;
+                    option.textContent = req.code + ' - ' + req.name;
+                    if (selectedRequirement === req.code) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+                select.innerHTML += `</optgroup>`;
+
+                select.innerHTML += `<optgroup label="Major Core">`;
+                MAJOR_REQUIREMENTS['Major Core'].forEach(req => {
+                    const option = document.createElement('option');
+                    option.value = req.code;
+                    option.textContent = req.code + ' - ' + req.name;
+                    if (selectedRequirement === req.code) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+                select.innerHTML += `</optgroup>`;
+
+                select.innerHTML += `<optgroup label="Electives">`;
+                const techElectiveOption = document.createElement('option');
+                techElectiveOption.value = 'tech-elective';
+                techElectiveOption.textContent = 'CS Technical Elective';
+                if (selectedRequirement === 'tech-elective') {
+                    techElectiveOption.selected = true;
+                }
+                select.appendChild(techElectiveOption);
+                select.innerHTML += `</optgroup>`;
+
+                return select;
+            }
+
+
             function createCourseItem(course = {}) {
-                const courseId = `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 const courseItem = document.createElement('div');
-                courseItem.className = 'course-item flex items-center gap-2 mb-2 p-2 bg-gray-50 rounded-md fade-in';
+                courseItem.className = 'course-item flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2 p-2 bg-gray-50 rounded-md fade-in';
                 courseItem.innerHTML = `
-                    <input type="text" placeholder="Course Code (e.g., RHET 1301)" class="course-code w-1/4 p-2 text-sm" value="${course.code || ''}">
-                    <input type="text" placeholder="Course Name" class="course-name w-1/3 p-2 text-sm" value="${course.name || ''}">
-                    <input type="number" placeholder="Credits" class="course-credits w-1/6 p-2 text-sm" value="${course.credits || 3}" min="0" max="6">
-                    <div class="flex items-center gap-2 w-1/6">
-                        <input type="checkbox" class="transferred-checkbox" id="${courseId}" ${course.transferred ? 'checked' : ''}>
-                        <label for="${courseId}" class="text-sm text-gray-700">Transferred</label>
+                    <input type="text" placeholder="Course Code (e.g., RHET 1302)" class="course-code flex-grow p-2 text-sm" value="${course.code || ''}">
+                    <input type="text" placeholder="Course Name" class="course-name flex-grow p-2 text-sm" value="${course.name || ''}">
+                    <input type="number" placeholder="Credits" class="course-credits p-2 text-sm w-16" value="${course.credits || 3}" min="0" max="6">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" class="transferred-checkbox" id="transferred-${Date.now()}" ${course.transferred ? 'checked' : ''}>
+                        <label for="transferred-${Date.now()}" class="text-sm text-gray-700">Transferred</label>
                     </div>
                     <button type="button" class="remove-course-btn btn btn-danger text-sm px-2 py-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 `;
+                
+                const categorySelect = createCoreCategorySelect(course.coreCategory);
+                const majorSelect = createMajorRequirementSelect(course.majorRequirement);
+                
+                const inputsContainer = document.createElement('div');
+                inputsContainer.className = 'flex flex-col sm:flex-row gap-2 w-full';
+                inputsContainer.appendChild(majorSelect);
+                inputsContainer.appendChild(categorySelect);
+
+                courseItem.insertBefore(inputsContainer, courseItem.querySelector('.remove-course-btn'));
 
                 // Event listeners for course updates
-                courseItem.querySelector('.course-credits').addEventListener('input', (e) => {
-                    const semesterEl = e.target.closest('.semester-card');
-                    updateSemesterTotal(semesterEl);
+                const inputs = courseItem.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const semesterEl = e.target.closest('.semester-card');
+                        updateSemesterTotal(semesterEl);
+                    });
                 });
-                courseItem.querySelector('.course-code').addEventListener('input', savePlan);
-                courseItem.querySelector('.course-name').addEventListener('input', savePlan);
-                courseItem.querySelector('.transferred-checkbox').addEventListener('change', savePlan);
 
                 // Event listener to remove a course with fade out animation
                 courseItem.querySelector('.remove-course-btn').addEventListener('click', (e) => {
@@ -271,15 +552,13 @@
                 return courseItem;
             }
 
-            // Function to create a new semester
             function createSemester(semester = {}) {
-                const semesterId = `semester-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 const semesterCard = document.createElement('div');
                 semesterCard.className = 'semester-card card p-6 fade-in';
                 semesterCard.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                         <div class="flex-grow">
-                            <input type="text" class="semester-name text-2xl font-bold bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-utd-green p-0" placeholder="Semester Name" value="${semester.name || `Semester ${document.querySelectorAll('.semester-card').length + 1}`}">
+                            <input type="text" class="semester-name text-2xl font-bold bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-[#008542] p-0" placeholder="Semester Name" value="${semester.name || `Semester ${document.querySelectorAll('.semester-card').length + 1}`}">
                             <div class="text-sm text-gray-500 mt-1">
                                 Total Credits: <span class="semester-credits font-bold">0</span>
                             </div>
@@ -301,22 +580,19 @@
                 `;
                 semesterCard.querySelector('.semester-name').addEventListener('input', savePlan);
 
-                // Add courses from loaded data
                 const coursesContainer = semesterCard.querySelector('.courses-container');
                 if (semester.courses && semester.courses.length > 0) {
                     semester.courses.forEach(course => {
                         coursesContainer.appendChild(createCourseItem(course));
                     });
-                    updateSemesterTotal(semesterCard); // Update totals after loading courses
+                    updateSemesterTotal(semesterCard); 
                 }
 
-                // Event listener to add a new course
                 semesterCard.querySelector('.add-course-btn').addEventListener('click', () => {
                     coursesContainer.appendChild(createCourseItem());
                     updateSemesterTotal(semesterCard);
                 });
 
-                // Event listener to remove a semester with fade out animation
                 semesterCard.querySelector('.remove-semester-btn').addEventListener('click', () => {
                     semesterCard.classList.remove('fade-in');
                     semesterCard.classList.add('fade-out');
@@ -330,14 +606,11 @@
             }
 
             // --- Event Listeners ---
-
-            // Event listener for adding a new semester
             addSemesterBtn.addEventListener('click', () => {
                 semestersContainer.appendChild(createSemester());
                 savePlan();
             });
 
-            // Event listener for clearing all data (two-step confirmation)
             clearBtn.addEventListener('click', () => {
                 if (!clearConfirmed) {
                     showToast('Click again to confirm clearing all data.');
@@ -345,7 +618,6 @@
                     clearBtn.classList.remove('btn-danger');
                     clearBtn.classList.add('btn-secondary');
                     clearConfirmed = true;
-                    // Reset the button after a timeout if not confirmed
                     setTimeout(() => {
                         if (clearConfirmed) {
                             clearBtn.textContent = 'Clear All';
@@ -367,8 +639,6 @@
             });
 
             // --- Initial Load ---
-
-            // Initial load of the plan from local storage if it exists
             const savedPlan = localStorage.getItem('utdDegreePlan');
             if (savedPlan) {
                 const semesters = JSON.parse(savedPlan);
@@ -380,7 +650,6 @@
                     semestersContainer.appendChild(createSemester({ name: 'Fall 2025' }));
                 }
             } else {
-                // Add an initial semester if no plan is saved
                 semestersContainer.appendChild(createSemester({ name: 'Fall 2025' }));
             }
             updateSummary();
