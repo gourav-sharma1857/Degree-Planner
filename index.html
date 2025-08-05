@@ -611,10 +611,10 @@
                 courseItem.innerHTML = `
                     <div class="flex items-center gap-2 flex-grow">
                         <div class="status-circle w-3 h-3 rounded-full ${statusColor}"></div>
-                        <input type="text" placeholder="Course Code (e.g., RHET 1302)" class="course-code flex-grow p-2 text-sm" value="${course.code || ''}">
-                    </div>
-                    <input type="text" placeholder="Course Name" class="course-name flex-grow p-2 text-sm" value="${course.name || ''}">
-                    <input type="number" placeholder="Credits" class="course-credits p-2 text-sm w-16" value="${course.credits || 3}" min="0" max="6">
+                        <input type="text" placeholder="Course Code (e.g., RHET 1302)" class="course-code flex-grow min-w-[120px] p-2 text-sm" value="${course.code || ''}">
+                        </div>
+                        <input type="text" placeholder="Course Name" class="course-name flex-grow min-w-[180px] p-2 text-sm" value="${course.name || ''}">
+                        <input type="number" placeholder="Credits" class="course-credits p-2 text-sm w-16" value="${course.credits || 3}" min="0" max="6">
                     <select class="course-status text-sm p-2 bg-white">
                         <option value="Planned" ${status === 'Planned' ? 'selected' : ''}>Planned</option>
                         <option value="Current" ${status === 'Current' ? 'selected' : ''}>Current</option>
