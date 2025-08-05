@@ -321,8 +321,7 @@
                 
                 let totalCoreCreditsEarned = 0;
                 for (const cat in coreTracker) {
-                    const required = CORE_REQUIREMENTS.find(req => req.category === cat).required;
-                    totalCoreCreditsEarned += Math.min(required, coreTracker[cat]);
+                    totalCoreCreditsEarned += coreTracker[cat];
                 }
                 coreCreditsEl.textContent = totalCoreCreditsEarned;
                 remainingCreditsEl.textContent = Math.max(0, TOTAL_DEGREE_HOURS - totalCredits);
